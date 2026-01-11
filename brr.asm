@@ -1,25 +1,10 @@
-org 8200h
-plot_x0_y0_y1_y1:
-ld hl,4010h
-ld c,80h
-ld b,127
-call vert_neg
-ld b,27
-call hori_poz
-
-ld hl,4010h
-ld b,127
-call vert_poz
-ld b,27
-call hori_neg
-ret
-
+org 8100h
 vert_poz:
 ld a,$09
 ld (__mod_0003+1),a
 ld a,$2c
 ld (__mod_0004),a
-call vert
+;call vert
 ret
 
 vert_neg:
@@ -27,13 +12,14 @@ ld a,$01
 ld (__mod_0003+1),a
 ld a,$2d
 ld (__mod_0004),a
-call vert
+;call vert
 ret
 
 vert:
 	ld de,07e0h
 vert_loop:
 	ld a,c
+__mod_0000:
 	xor (hl)
 	ld (hl),a
 ;	ld (hl),c
@@ -75,7 +61,7 @@ ld a,$09
 ld (__mod_0013+1),a
 ld a,$2c
 ld (__mod_0014),a
-call hori
+;call hori
 ret
 
 hori_neg:
@@ -83,13 +69,14 @@ ld a,$01
 ld (__mod_0013+1),a
 ld a,$2d
 ld (__mod_0014),a
-call hori
+;call hori
 ret
 
 hori:
 	ld de,07e0h
 hori_loop:
 	ld a,c
+__mod_0010:
 	xor (hl)
 	ld (hl),a
 	ld a,b
@@ -125,6 +112,185 @@ hori_switch_driveway:
 	add a,$7
 	ld h,a
 	jr hori_next_point
+
+org 8200h
+plotter:
+	;ld a,r
+	halt
+	ld a,2
+	out (254),a
+	call plot_test
+	;ld a,r
+	ld a,6
+	out (254),a
+	jp plotter
+ret
+
+plot_y0_x0_y1_x1_stack:
+	pop de
+	pop hl
+	ld a,4;;;;;;;;;;;;;
+	out (254),a;;;;;;;;
+plot_y0_x0_y1_x1:
+	ld a,h
+	cp d
+	jr c, plot_straight
+		ex de,hl
+plot_straight:
+	push hl
+	ld a,l
+	and $7
+	ld b,a
+	or a
+	ld a,$80
+	jr z,plot_x_bit_done
+plot_x_bit:
+		rrca
+		dec b
+	jr nz,plot_x_bit
+plot_x_bit_done:
+	ld c,a
+	ld a,h
+	and $7
+	ld b,a
+	ld a,h
+	and $c0
+	rrca
+	rrca
+	rrca
+	or b
+	or $40
+	rrc h
+	rrc h
+	rrc h
+	rrc h
+	rr l
+	rrc h
+	rr l
+	rrc h
+	rr l
+	ld h,a
+compute_slope:
+	ex (sp),hl
+	ld a,d
+	sub h
+	ld h,a
+	ld a,e
+	sub l
+	ld l,a
+	call vert_poz
+	call hori_poz
+	jr nc,pozz
+negg:
+	call vert_neg
+	call hori_neg
+	ld a,l
+	neg
+	ld l,a
+pozz:
+	ld a,l
+	sub h
+	jr c,plot_vert
+plot_hori:
+	ld b,l
+	ld l,h
+	ld h,b
+	ld a,2;;;;;;;;;;;;;
+	out (254),a;;;;;;;;
+	call thresh
+	ld a,5;;;;;;;;;;;;;
+	out (254),a;;;;;;;;
+	pop hl
+	call hori
+ret
+
+plot_vert:
+	ld b,h
+	ld a,2;;;;;;;;;;;;;
+	out (254),a;;;;;;;;
+	call thresh
+	ld a,5;;;;;;;;;;;;;
+	out (254),a;;;;;;;;
+	pop hl
+	call vert
+ret
+
+thresh_loghl:
+	ccf
+	rl h
+	ld b,a
+	ld d,a
+	ld c,h
+	ld e,l
+	jr thresh_convert
+
+here:jp here
+thresh:
+	push de
+	push bc
+	inc h
+	inc l
+	ld a,$8
+thresh_logh:
+	dec a
+	;ccf
+	rl l
+	jr c,thresh_loghl
+	rl h
+	jr nc,thresh_logh
+	ccf
+	ld b,a
+	ld c,h
+thresh_logl:
+	rl l
+	dec a
+	jr nc,thresh_logl
+	ld d,a
+	ld e,l
+thresh_convert:
+	ccf
+	ld h,tolog/256
+	ld l,c
+	ld c,(hl)
+	ld l,e
+	ld e,(hl)
+	ex de,hl
+	sbc hl,bc
+	jr z,thresh_zero
+	ex de,hl
+	ld h,tofloat/256
+	ld l,e
+	ld e,(hl)
+	ex de,hl
+IF 1
+	ld a,h
+	add a,$8
+	ld h,a
+	ld a,$8;
+	sub h
+	ld h,a
+ENDIF
+	scf
+	ld a,l
+	rra
+	dec h
+thresh_floatt:
+	jr z,thresh_end
+	srl a
+	dec h
+	jr thresh_floatt
+thresh_end:
+	neg
+;	call here;HERE
+thresh_modify:
+	ld (__mod_0002+1),a
+	ld (__mod_0012+1),a
+	pop bc
+	pop de
+ret
+thresh_zero:
+	xor a
+	jr thresh_modify
 
 org 8300h
 tolog:
@@ -181,3 +347,179 @@ db  $03, $83, $43, $c3, $23, $a3, $63, $e3, $13, $93, $53, $d3, $33, $b3, $73, $
 db  $0b, $8b, $4b, $cb, $2b, $ab, $6b, $eb, $1b, $9b, $5b, $db, $3b, $bb, $7b, $fb
 db  $07, $87, $47, $c7, $27, $a7, $67, $e7, $17, $97, $57, $d7, $37, $b7, $77, $f7
 db  $0f, $8f, $4f, $cf, $2f, $af, $6f, $ef, $1f, $9f, $5f, $df, $3f, $bf, $7f, $ff
+
+plot_test:
+	ld a,$B6
+	ld (__mod_0000),a
+	ld (__mod_0010),a
+	ld bc,plot_y0_x0_y1_x1_stack
+IF 1
+If 1
+	ld hl,$8080
+	ld de,$B0B0
+	push hl
+	push de
+	push bc
+	ld hl,$80B0
+	ld de,$B080
+	push hl
+	push de
+	push bc
+ENDIF
+	ld hl,$2020
+	ld de,$3060
+	push hl
+	push de
+	push bc
+	ld hl,$3020
+	ld de,$4060
+	push hl
+	push de
+	push bc
+	ld hl,$4027
+	ld de,$5067
+	push hl
+	push de
+	push bc
+	ld hl,$2020
+	ld de,$6030
+	push hl  
+	push de  
+	push bc  
+	ld hl,$2030
+	ld de,$6040
+	push hl  
+	push de  
+	push bc  
+	ld hl,$2740
+	ld de,$6750
+	push hl
+	push de
+	push bc
+ENDIF
+IF 0
+	ld hl,$2020
+	ld de,$3080
+	push hl
+	push de
+	push bc
+	ld hl,$3020
+	ld de,$4080
+	push hl
+	push de
+	push bc
+	ld hl,$4020
+	ld de,$5080
+	push hl
+	push de
+	push bc
+	ld hl,$5020
+	ld de,$6080
+	push hl
+	push de
+	push bc
+	ld hl,$6020
+	ld de,$7080
+	push hl
+	push de
+	push bc
+	ld hl,$7020
+	ld de,$8080
+	push hl
+	push de
+	push bc
+ENDIF
+IF 0
+	ld hl,$0001
+	ld de,$01fe
+	push hl
+	push de
+	push bc
+	ld hl,$2001
+	ld de,$21fe
+	push hl
+	push de
+	push bc
+	ld hl,$4001
+	ld de,$41fe
+	push hl
+	push de
+	push bc
+	ld hl,$6001
+	ld de,$61fe
+	push hl
+	push de
+	push bc
+	ld hl,$8001
+	ld de,$81fe
+	push hl
+	push de
+	push bc
+	ld hl,$A001
+	ld de,$A1fe
+	push hl
+	push de
+	push bc
+ENDIF
+IF 0
+	ld hl,$4060
+	ld de,$8080
+	push hl
+	push de
+	push bc
+	ld hl,$0080
+	ld de,$A081
+	push hl
+	push de
+	push bc
+	ld hl,$A201
+	ld de,$A4fe
+	push hl
+	push de
+	push bc
+ENDIF
+IF 0
+	ld hl,$5070
+	ld de,$9090
+	push hl
+	push de
+	push bc
+	ld hl,$6080
+	ld de,$A0A0
+	push hl
+	push de
+	push bc
+	ld hl,$7090
+	ld de,$B0B0
+	push hl
+	push de
+	push bc
+	ld hl,$80A0
+	ld de,$C0C0
+	push hl
+	push de
+	push bc
+ENDIF
+IF 0
+	ld hl,$7050
+	ld de,$9090
+	push hl  
+	push de  
+	push bc  
+	ld hl,$8060
+	ld de,$A0A0
+	push hl  
+	push de  
+	push bc  
+	ld hl,$9070
+	ld de,$B0B0
+	push hl  
+	push de  
+	push bc  
+	ld hl,$A080
+	ld de,$C0C0
+	push hl
+	push de
+	push bc
+ENDIF
+ret	
