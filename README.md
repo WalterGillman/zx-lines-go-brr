@@ -12,11 +12,14 @@ The threshold value used in this implementation is only an estimate so 30% of th
 
 [2] Uses the sorting method so it is not a viable alternative.
 
+NOTE: The code is not completely tested for all edge cases and as provided endlessly loops generating something close to the screenshot below.
+
 ![screenshot showing lines and profiling in the border](https://github.com/WalterGillman/zx-lines-go-brr/blob/main/brr.png?raw=true)
 
 ## Bibliography
 
 [1] Kramm, Matthias. (2023). BRR Lines - A new line drawing method for the cycle savvy. [https://www.quiss.org/boo/](quiss.org) (Retrieved January 1, 2026)
+
 [2] Davies, Jonathan. (2025). Bit-Reversal Line Rasterization. [https://jcd.pub/2025/05/15/bit-reversal-line-rasterization/](jcd.pub) (Retrieved January 1, 2026)
 
 ## Contact
