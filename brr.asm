@@ -1,28 +1,28 @@
 org 8100h
+;POSITIVE X
 vert_poz:
 ld a,$09
 ld (__mod_0003+1),a
 ld a,$2c
 ld (__mod_0004),a
-;call vert
 ret
 
+;POSITIVE X
 vert_neg:
 ld a,$01
 ld (__mod_0003+1),a
 ld a,$2d
 ld (__mod_0004),a
-;call vert
 ret
 
+; DRAW VERTICAL LINE B PIXELS TALL FROM HL/C
 vert:
 	ld de,07e0h
 vert_loop:
 	ld a,c
 __mod_0000:
-	xor (hl)
+	xor (hl);or (hl)
 	ld (hl),a
-;	ld (hl),c
 	inc h
 	ld a,h
 	and $7
@@ -56,28 +56,29 @@ vert_switch_driveway:
 	ld h,a
 	jr vert_next_point
 
+;POSITIVE X
 hori_poz:
 ld a,$09
 ld (__mod_0013+1),a
 ld a,$2c
 ld (__mod_0014),a
-;call hori
 ret
 
+;NEGATIVE X
 hori_neg:
 ld a,$01
 ld (__mod_0013+1),a
 ld a,$2d
 ld (__mod_0014),a
-;call hori
 ret
 
+; DRAW HORIZONTAL LINE B PIXELS WIDE FROM HL/C
 hori:
 	ld de,07e0h
 hori_loop:
 	ld a,c
 __mod_0010:
-	xor (hl)
+	xor (hl);or (hl)
 	ld (hl),a
 	ld a,b
 	ld (__mod_0011+1),a
@@ -114,18 +115,18 @@ hori_switch_driveway:
 	jr hori_next_point
 
 org 8200h
+; PLOT LINES IN PLOT_TEST IN INFINITE LOOP
 plotter:
-	;ld a,r
 	halt
 	ld a,2
 	out (254),a
 	call plot_test
-	;ld a,r
 	ld a,6
 	out (254),a
 	jp plotter
 ret
 
+; PLOT LINE FROM HL TO DE(HOPEFULLY)
 plot_y0_x0_y1_x1_stack:
 	pop de
 	pop hl
@@ -224,16 +225,16 @@ thresh_loghl:
 	ld e,l
 	jr thresh_convert
 
-here:jp here
+; FIND THE THRESHOLD APPROXIMATION -(256*B/A)
 thresh:
 	push de
 	push bc
+; CONVERT INT TO FLOAT
 	inc h
 	inc l
 	ld a,$8
 thresh_logh:
 	dec a
-	;ccf
 	rl l
 	jr c,thresh_loghl
 	rl h
@@ -249,27 +250,30 @@ thresh_logl:
 	ld e,l
 thresh_convert:
 	ccf
+; CONVERT TO LNS
 	ld h,tolog/256
 	ld l,c
 	ld c,(hl)
 	ld l,e
 	ld e,(hl)
 	ex de,hl
+; SUBTRACT
 	sbc hl,bc
 	jr z,thresh_zero
 	ex de,hl
+; CONVERT BACK TO FLOAT
 	ld h,tofloat/256
 	ld l,e
 	ld e,(hl)
 	ex de,hl
-IF 1
 	ld a,h
+; MULTIPLY BY 8
 	add a,$8
+; CONVERT BACK TO INT
 	ld h,a
 	ld a,$8;
 	sub h
 	ld h,a
-ENDIF
 	scf
 	ld a,l
 	rra
@@ -280,8 +284,8 @@ thresh_floatt:
 	dec h
 	jr thresh_floatt
 thresh_end:
+; -A
 	neg
-;	call here;HERE
 thresh_modify:
 	ld (__mod_0002+1),a
 	ld (__mod_0012+1),a
