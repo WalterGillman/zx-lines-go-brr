@@ -18,9 +18,9 @@ NOTE: The code is not completely tested for all edge cases and as provided endle
 
 ## Bibliography
 
-[1] Kramm, Matthias. (2023). BRR Lines - A new line drawing method for the cycle savvy. [https://www.quiss.org/boo/](quiss.org) (Retrieved January 1, 2026)
+[1] Kramm, Matthias. (2023). BRR Lines - A new line drawing method for the cycle savvy. [quiss.org](https://www.quiss.org/boo/) (Retrieved January 1, 2026)
 
-[2] Davies, Jonathan. (2025). Bit-Reversal Line Rasterization. [https://jcd.pub/2025/05/15/bit-reversal-line-rasterization/](jcd.pub) (Retrieved January 1, 2026)
+[2] Davies, Jonathan. (2025). Bit-Reversal Line Rasterization. [jcd.pub](https://jcd.pub/2025/05/15/bit-reversal-line-rasterization/) (Retrieved January 1, 2026)
 
 ## Contact
 
